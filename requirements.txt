@@ -1,0 +1,6 @@
+Flask==2.1.1
+Flask-SQLAlchemy==2.5.1
+Flask-Cors
+pyzbar
+gunicorn
+pillow
