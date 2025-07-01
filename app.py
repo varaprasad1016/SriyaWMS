@@ -419,28 +419,81 @@ def add_product():
 
     return render_template('sales_orders.html', orders=processed_orders)
 
+@app.route('/edit-order/<int:order_id>', methods=['GET', 'POST'])
+def edit_order(order_id):
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        # Get form data
+        new_status = request.form.get('status')
+        
+        # Update order status
+        conn.execute('UPDATE sales_orders SET status = ? WHERE id = ?', 
+                    (new_status, order_id))
+        conn.commit()
+        
+        flash('Order updated successfully', 'success')
+        return redirect(url_for('dashboard'))
+    
+    # Get order details for display
+    order = conn.execute('''
+        SELECT sales_orders.*, users.username 
+        FROM sales_orders 
+        LEFT JOIN users ON sales_orders.customer_id = users.id 
+        WHERE sales_orders.id = ?
+    ''', (order_id,)).fetchone()
+    
+    if not order:
+        conn.close()
+        flash('Order not found', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Get order items
+    order_items = []
+    try:
+        order_data = json.loads(order['order_data'])
+        for barcode, details in order_data.items():
+            product = conn.execute('SELECT * FROM products WHERE barcode = ?', 
+                                 (barcode,)).fetchone()
+            if product:
+                order_items.append({
+                    'product_id': product['id'],
+                    'name': product['name'],
+                    'barcode': barcode,
+                    'quantity': details['quantity']
+                })
+    except:
+        pass
+    
+    conn.close()
+    
+    return render_template('edit_order.html', 
+                          order=order, 
+                          items=order_items)
+
 @app.route('/update-order-status/<int:order_id>', methods=['POST'])
 def update_order_status(order_id):
     if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
+        return jsonify({'error': 'Unauthorized'}), 401
     new_status = request.form['status']
     conn = get_db_connection()
     conn.execute('UPDATE sales_orders SET status = ? WHERE id = ?', (new_status, order_id))
-    if new_status == 'Order Accepted':
+    if new_status == 'Accepted':
         order = conn.execute('SELECT * FROM sales_orders WHERE id = ?', (order_id,)).fetchone()
         if order:
             try:
                 order_data = json.loads(order['order_data'])
-                # Process items based on the structure from the checkout function
                 for barcode, details in order_data.items():
                     qty = details['quantity']
-                    # Update product quantities
                     conn.execute('UPDATE products SET quantity = quantity - ? WHERE barcode = ?', (qty, barcode))
             except Exception as e:
                 print("Error processing order data:", e)
     conn.commit()
     conn.close()
-    return redirect(url_for('dashboard'))
+    return jsonify({'success': True})
 
 @app.route('/customer-dashboard')
 def customer_dashboard():

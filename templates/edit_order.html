@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Edit Order #{{ order['id'] }}</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Order Details</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Customer Information</h5>
+                        <p><strong>Customer:</strong> {{ order['username'] }}</p>
+                        <p><strong>Order Date:</strong> {{ order['created_at'] }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Order Status</h5>
+                        <select name="status" class="form-select" required>
+                            <option value="Pending" {% if order['status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Accepted" {% if order['status'] == 'Accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="Shipped" {% if order['status'] == 'Shipped' %}selected{% endif %}>Shipped</option>
+                            <option value="Delivered" {% if order['status'] == 'Delivered' %}selected{% endif %}>Delivered</option>
+                            <option value="Declined" {% if order['status'] == 'Declined' %}selected{% endif %}>Declined</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Barcode</th>
+                                <th class="text-end">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.barcode }}</td>
+                                <td class="text-end">{{ item.quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
