@@ -813,12 +813,16 @@ def download_csv():
     conn = get_db_connection()
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
-    output = BytesIO()
-    writer = csv.writer(output)
-    writer.writerow(['ID', 'Name', 'Barcode', 'Quantity', 'Location'])
+    
+    # Create CSV content as string
+    csv_content = "ID,Name,Barcode,Quantity,Location\n"
     for product in products:
-        writer.writerow([product['id'], product['name'], product['barcode'], product['quantity'], product['location']])
+        csv_content += f"{product['id']},{product['name']},{product['barcode']},{product['quantity']},{product['location']}\n"
+    
+    # Convert to BytesIO
+    output = BytesIO(csv_content.encode('utf-8'))
     output.seek(0)
+    
     return send_file(output, mimetype='text/csv', download_name='inventory.csv', as_attachment=True)
 
 @app.route('/your-orders')
