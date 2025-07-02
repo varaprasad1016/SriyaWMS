@@ -349,14 +349,20 @@ def shipment():
             order_data = json.loads(order['order_data'])
             item_list = []
             for barcode, details in order_data.items():
-                # Get product info
+                # Get product info with better debugging
                 product = conn.execute('SELECT name FROM products WHERE barcode = ?', (barcode,)).fetchone()
                 
                 if product:
                     product_name = product['name']
                 else:
-                    # If product not found, try to get it from order history or show barcode
-                    product_name = f"Product (Barcode: {barcode})"
+                    # Check if barcode exists in any format
+                    all_products = conn.execute('SELECT barcode, name FROM products WHERE barcode LIKE ?', (f'%{barcode}%',)).fetchall()
+                    if all_products:
+                        # Use the first match
+                        product_name = all_products[0]['name']
+                    else:
+                        # Still no match, show the barcode for debugging
+                        product_name = f"Unknown Product (Barcode: {barcode})"
                 
                 # Ensure details has quantity key
                 quantity = details.get('quantity', 1) if isinstance(details, dict) else details
@@ -371,6 +377,43 @@ def shipment():
 
     conn.close()
     return render_template('shipments.html', orders=processed_orders)
+
+# Add this debug route to check your data
+@app.route('/debug-shipments')
+def debug_shipments():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    # Get sample products
+    products = conn.execute('SELECT barcode, name FROM products LIMIT 10').fetchall()
+    
+    # Get sample orders
+    orders = conn.execute('SELECT id, order_data FROM sales_orders LIMIT 5').fetchall()
+    
+    debug_info = {
+        'sample_products': [dict(p) for p in products],
+        'sample_orders': []
+    }
+    
+    for order in orders:
+        try:
+            order_data = json.loads(order['order_data'])
+            debug_info['sample_orders'].append({
+                'order_id': order['id'],
+                'barcodes_in_order': list(order_data.keys()),
+                'order_data': order_data
+            })
+        except:
+            debug_info['sample_orders'].append({
+                'order_id': order['id'],
+                'error': 'Could not parse order_data'
+            })
+    
+    conn.close()
+    
+    return jsonify(debug_info)
 
 
 
@@ -964,6 +1007,35 @@ def index():
 def print_barcode(barcode):
     image_path = generate_barcode_image(barcode)
     return render_template('print_barcode.html', barcode=barcode)
+
+@app.route('/cleanup-orders')
+def cleanup_orders():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    # Find orders with non-existent products
+    orders = conn.execute('SELECT * FROM sales_orders').fetchall()
+    orphaned_orders = []
+    
+    for order in orders:
+        try:
+            order_data = json.loads(order['order_data'])
+            for barcode in order_data.keys():
+                product = conn.execute('SELECT name FROM products WHERE barcode = ?', (barcode,)).fetchone()
+                if not product:
+                    orphaned_orders.append({
+                        'order_id': order['id'],
+                        'missing_barcode': barcode,
+                        'customer_id': order['customer_id']
+                    })
+                    break
+        except:
+            continue
+    
+    conn.close()
+    return jsonify({'orphaned_orders': orphaned_orders})
 
 @app.route('/forecast')
 def sales_forecast():
