@@ -349,12 +349,24 @@ def shipment():
             order_data = json.loads(order['order_data'])
             item_list = []
             for barcode, details in order_data.items():
+                # Get product info
                 product = conn.execute('SELECT name FROM products WHERE barcode = ?', (barcode,)).fetchone()
-                product_name = product['name'] if product else 'Unknown Product'
-                item_list.append(f"{product_name} x{details['quantity']}")
-            order_dict['product_names'] = item_list
-        except Exception:
-            order_dict['product_names'] = ['[Invalid data]']
+                
+                if product:
+                    product_name = product['name']
+                else:
+                    # If product not found, try to get it from order history or show barcode
+                    product_name = f"Product (Barcode: {barcode})"
+                
+                # Ensure details has quantity key
+                quantity = details.get('quantity', 1) if isinstance(details, dict) else details
+                item_list.append(f"{product_name} x{quantity}")
+            
+            order_dict['product_names'] = item_list if item_list else ['No items found']
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            # Better error handling
+            order_dict['product_names'] = [f'[Data parsing error: {str(e)}]']
+        
         processed_orders.append(order_dict)
 
     conn.close()
