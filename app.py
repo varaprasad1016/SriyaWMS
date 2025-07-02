@@ -361,8 +361,8 @@ def shipment():
                         # Use the first match
                         product_name = all_products[0]['name']
                     else:
-                        # Still no match, show the barcode for debugging
-                        product_name = f"Unknown Product (Barcode: {barcode})"
+                        # Still no match, show clearer message for deleted products
+                        product_name = f"[Deleted Product - {barcode}]"
                 
                 # Ensure details has quantity key
                 quantity = details.get('quantity', 1) if isinstance(details, dict) else details
