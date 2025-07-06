@@ -754,8 +754,8 @@ def add_stock():
                                     (quantity, product_id))
                         
                         # Also log this in the stock table for tracking
-                        conn.execute('INSERT INTO stock (barcode, quantity) SELECT barcode, ? FROM products WHERE id = ?',
-                                    (quantity, product_id))
+                    conn.execute('INSERT INTO stock (barcode, quantity) VALUES (?, ?)',
+                                (product['barcode'], quantity))
                         
                         # Log activity to activity_log table
                         product_name = product['name']
