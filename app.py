@@ -745,7 +745,7 @@ def add_stock():
                     message_type = "error"
                 else:
                     # Get current product details
-                    product = conn.execute('SELECT name, quantity FROM products WHERE id = ?', 
+                    product = conn.execute('SELECT name, barcode, quantity FROM products WHERE id = ?', 
                                           (product_id,)).fetchone()
                     
                     if product:
@@ -753,17 +753,22 @@ def add_stock():
                         conn.execute('UPDATE products SET quantity = quantity + ? WHERE id = ?', 
                                     (quantity, product_id))
                         
-                        # Also log this in the stock table for tracking
-                        conn.execute('INSERT INTO stock (barcode, quantity) VALUES (?, ?)',
-                                    (product['barcode'], quantity))
+                        # Remove the problematic stock table insertion
+                        # since you only use the products table
                         
                         # Log activity to activity_log table
                         product_name = product['name']
                         new_quantity = product['quantity'] + quantity
-                        conn.execute('''
-                            INSERT INTO activity_log (activity_type, description, related_id) 
-                            VALUES (?, ?, ?)
-                        ''', ('stock_added', f"Added {quantity} units to {product_name}. New total: {new_quantity}", product_id))
+                        
+                        # Optional: Log activity if activity_log table exists
+                        try:
+                            conn.execute('''
+                                INSERT INTO activity_log (activity_type, description, related_id) 
+                                VALUES (?, ?, ?)
+                            ''', ('stock_added', f"Added {quantity} units to {product_name}. New total: {new_quantity}", product_id))
+                        except:
+                            # Skip if activity_log table doesn't exist
+                            pass
                         
                         conn.commit()
                         message = f"Successfully added {quantity} units to {product_name}"
