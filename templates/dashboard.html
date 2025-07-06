@@ -874,13 +874,9 @@
                         <td>{{ order.products|default('3 items') }}</td>
                         <td>
                             {% if order.created_at %}
-                                {% if order.created_at is string %}
-                                    {{ order.created_at }}
-                                {% else %}
-                                    {{ order.created_at.strftime('%B %d, %Y') }}
-                                {% endif %}
+                                {{ order.created_at|format_ist('%B %d, %Y at %I:%M %p IST') }}
                             {% else %}
-                                May 10, 2025
+                                N/A
                             {% endif %}
                         </td>
                         <td>

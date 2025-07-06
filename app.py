@@ -14,9 +14,59 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # change this for security!
+
+# IST timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+# Utility function to convert UTC to IST
+def utc_to_ist(utc_datetime_str):
+    """Convert UTC datetime string to IST datetime string"""
+    if not utc_datetime_str:
+        return 'N/A'
+    try:
+        # Parse the UTC datetime
+        if isinstance(utc_datetime_str, str):
+            utc_dt = datetime.fromisoformat(utc_datetime_str.replace('Z', '+00:00'))
+        else:
+            utc_dt = utc_datetime_str
+        
+        # Convert to IST
+        if utc_dt.tzinfo is None:
+            utc_dt = pytz.UTC.localize(utc_dt)
+        
+        ist_dt = utc_dt.astimezone(IST)
+        return ist_dt.strftime('%Y-%m-%d %H:%M:%S IST')
+    except:
+        return utc_datetime_str
+
+# Jinja2 filter for IST conversion
+@app.template_filter('to_ist')
+def to_ist_filter(utc_datetime_str):
+    return utc_to_ist(utc_datetime_str)
+
+@app.template_filter('format_ist')
+def format_ist_filter(utc_datetime_str, format_str='%B %d, %Y at %I:%M %p IST'):
+    """Format datetime to IST with custom format"""
+    if not utc_datetime_str:
+        return 'N/A'
+    try:
+        if isinstance(utc_datetime_str, str):
+            utc_dt = datetime.fromisoformat(utc_datetime_str.replace('Z', '+00:00'))
+        else:
+            utc_dt = utc_datetime_str
+        
+        if utc_dt.tzinfo is None:
+            utc_dt = pytz.UTC.localize(utc_dt)
+        
+        ist_dt = utc_dt.astimezone(IST)
+        return ist_dt.strftime(format_str)
+    except:
+        return utc_datetime_str
 
 # Initialize the database
 def init_db():
@@ -345,33 +395,47 @@ def shipment():
     processed_orders = []
     for order in orders:
         order_dict = dict(order)
+        
+        # Convert created_at to IST
+        order_dict['created_at_ist'] = utc_to_ist(order['created_at'])
+        
         try:
             order_data = json.loads(order['order_data'])
             item_list = []
+            total_value = 0
+            
             for barcode, details in order_data.items():
                 # Get product info with better debugging
-                product = conn.execute('SELECT name FROM products WHERE barcode = ?', (barcode,)).fetchone()
+                product = conn.execute('SELECT name, price FROM products WHERE barcode = ?', (barcode,)).fetchone()
                 
                 if product:
                     product_name = product['name']
+                    # Calculate value if price exists
+                    price = product.get('price', 0) if product.get('price') else 0
                 else:
                     # Check if barcode exists in any format
-                    all_products = conn.execute('SELECT barcode, name FROM products WHERE barcode LIKE ?', (f'%{barcode}%',)).fetchall()
+                    all_products = conn.execute('SELECT barcode, name, price FROM products WHERE barcode LIKE ?', (f'%{barcode}%',)).fetchall()
                     if all_products:
                         # Use the first match
                         product_name = all_products[0]['name']
+                        price = all_products[0].get('price', 0) if all_products[0].get('price') else 0
                     else:
                         # Still no match, show clearer message for deleted products
                         product_name = f"[Deleted Product - {barcode}]"
+                        price = 0
                 
                 # Ensure details has quantity key
                 quantity = details.get('quantity', 1) if isinstance(details, dict) else details
-                item_list.append(f"{product_name} x{quantity}")
+                item_list.append(f"{product_name} (Qty: {quantity})")
+                total_value += price * quantity
             
             order_dict['product_names'] = item_list if item_list else ['No items found']
+            order_dict['total_value'] = total_value
+            
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             # Better error handling
             order_dict['product_names'] = [f'[Data parsing error: {str(e)}]']
+            order_dict['total_value'] = 0
         
         processed_orders.append(order_dict)
 

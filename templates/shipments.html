@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .table-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: auto;
             background: white;
             border-radius: 12px;
@@ -23,6 +23,7 @@
         }
         h2 {
             margin-bottom: 20px;
+            color: #1e88e5;
         }
         table {
             width: 100%;
@@ -32,46 +33,70 @@
         th, td {
             padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
         th {
             background-color: #1e88e5;
             color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f4f4f4;
-        }
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85rem;
             font-weight: 600;
         }
-        .status-pending { background-color: #ffeb3b; color: #333; }
-        .status-order-accepted { background-color: #8bc34a; color: white; }
-        .status-shipped { background-color: #03a9f4; color: white; }
-        .status-delivered { background-color: #4caf50; color: white; }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f0f8ff;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .status-order-accepted { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-shipped { background-color: #cce7ff; color: #004085; border: 1px solid #99d6ff; }
+        .status-delivered { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .product-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .product-list li {
+            padding: 2px 0;
+            font-size: 0.9rem;
+        }
+        .datetime-ist {
+            font-weight: 500;
+            color: #666;
+        }
+        .shipment-id {
+            font-weight: 600;
+            color: #1e88e5;
+        }
     </style>
 </head>
 <body>
     <div class="table-container">
-        <h2><i class="fas fa-truck"></i> Shipments Overview</h2>
+        <h2><i class="fas fa-truck"></i> Shipments Overview (Latest First)</h2>
         <table>
             <thead>
                 <tr>
                     <th>Shipment ID</th>
                     <th>Customer ID</th>
-                    <th>Products</th>
+                    <th>Products & Quantities</th>
                     <th>Status</th>
-                    <th>Created At</th>
+                    <th>Created At (IST)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for order in orders %}
                 <tr>
-                    <td>#{{ order['id'] }}</td>
+                    <td class="shipment-id">#{{ order['id'] }}</td>
                     <td>{{ order['customer_id'] }}</td>
                     <td>
-                        <ul>
+                        <ul class="product-list">
                             {% for product in order['product_names'] %}
                             <li>{{ product }}</li>
                             {% endfor %}
@@ -79,14 +104,18 @@
                     </td>
                     <td>
                         <span class="status-badge status-{{ order['status'].lower().replace(' ', '-') }}">
+                            <i class="fas fa-circle" style="font-size: 0.6rem; margin-right: 5px;"></i>
                             {{ order['status'] }}
                         </span>
                     </td>
-                    <td>{{ order['created_at'] }}</td>
+                    <td class="datetime-ist">{{ order['created_at']|format_ist }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5">No shipments found.</td>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                        No shipments found.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

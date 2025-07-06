@@ -445,7 +445,10 @@
                             {% endif %}
                         </td>
                         <td class="order-date">
-                            {{ order['created_at'][:16] if order['created_at'] else 'N/A' }}
+                            <div class="order-date">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ order['created_at']|format_ist('%B %d, %Y at %I:%M %p IST') if order['created_at'] else 'N/A' }}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
