@@ -544,9 +544,7 @@
         <div class="container">
             <a class="navbar-brand" href="#">SriyaWMS</a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/customer_dashboard">Products</a>
                 <a class="nav-link" href="/cart">Cart</a>
-                <a class="nav-link" href="/your_orders">Orders</a>
                 <a class="nav-link" href="/logout">Logout</a>
             </div>
         </div>
@@ -609,7 +607,7 @@
                             </div>
                         </td>
                         <td>
-                            <form onsubmit="addToCart(event, '{{ product['barcode'] }}')" class="cart-form">
+                            <form onsubmit="addToCart(event, '{{ product.barcode }}')" class="cart-form"></form>
                                 <input type="number" name="quantity" class="quantity-input" value="1" min="1" required>
                                 <button type="submit" class="add-btn">
                                     <i class="fas fa-plus me-2"></i>Add
