@@ -726,6 +726,12 @@
             const quantity = form.querySelector('input[name="quantity"]').value;
             const quantityNum = parseInt(quantity);
             
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            submitBtn.disabled = true;
+            
             fetch('/add-to-cart', {
                 method: 'POST',
                 headers: {
@@ -735,33 +741,40 @@
             })
             .then(res => {
                 if (!res.ok) {
-                    throw new Error(`Server error: ${res.status}`);
+                    return res.json().then(data => {
+                        throw new Error(data.message || `Server error: ${res.status}`);
+                    });
                 }
                 return res.json();
             })
             .then(data => {
                 if (data.success) {
-                    showNotification('Product added to cart!', 'success');
+                    showNotification(data.message || 'Product added to cart successfully!', 'success');
                     if (data.cart_count) {
                         const cartBadge = document.querySelector('.nav-link .badge');
                         if (cartBadge) {
                             cartBadge.textContent = data.cart_count;
                         } else {
                             const cartLink = document.querySelector('.nav-link.active');
-                            cartLink.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Cart <span class="badge bg-danger">' + data.cart_count + '</span>';
+                            if (cartLink) {
+                                cartLink.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Cart <span class="badge bg-danger">' + data.cart_count + '</span>';
+                            }
                         }
                     }
+                    // Reset form
+                    form.querySelector('input[name="quantity"]').value = '1';
                 } else {
                     showNotification(data.message || 'Error adding to cart. Please try again.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                if (error.message.includes('Server error')) {
-                    showNotification('Server error. Please try again later.', 'error');
-                } else {
-                    showNotification('Network error. Please check your connection.', 'error');
-                }
+                showNotification(error.message || 'Failed to add product to cart. Please try again.', 'error');
+            })
+            .finally(() => {
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             });
         }
 

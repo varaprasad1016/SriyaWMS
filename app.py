@@ -890,8 +890,7 @@ def view_cart():
             products.append({
                 'name': product['name'],
                 'barcode': barcode,
-                'quantity': item['quantity'],
-                'available': product['quantity']  # Add available quantity for validation
+                'quantity': item['quantity']
             })
     conn.close()
     cart_count = sum(item['quantity'] for item in cart.values())

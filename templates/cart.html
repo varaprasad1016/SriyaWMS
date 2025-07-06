@@ -465,33 +465,12 @@
                 <div class="summary-card">
                     <div class="icon"><i class="fas fa-boxes"></i></div>
                     <div class="number">{{ products|length }}</div>
-                    <div class="label">Items in Cart</div>
+                    <div class="label">Total Items</div>
                 </div>
                 <div class="summary-card">
                     <div class="icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="number">
-                        {% set in_stock_count = 0 %}
-                        {% for product in products %}
-                            {% if product.quantity <= product.available %}
-                                {% set in_stock_count = in_stock_count + 1 %}
-                            {% endif %}
-                        {% endfor %}
-                        {{ in_stock_count }}
-                    </div>
-                    <div class="label">In Stock</div>
-                </div>
-                <div class="summary-card">
-                    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div class="number">
-                        {% set partial_stock_count = 0 %}
-                        {% for product in products %}
-                            {% if product.quantity > product.available %}
-                                {% set partial_stock_count = partial_stock_count + 1 %}
-                            {% endif %}
-                        {% endfor %}
-                        {{ partial_stock_count }}
-                    </div>
-                    <div class="label">Partial Stock</div>
+                    <div class="number">{{ products|length }}</div>
+                    <div class="label">Ready to Order</div>
                 </div>
             </div>
 
@@ -502,8 +481,6 @@
                         <tr>
                             <th><i class="fas fa-tag me-2"></i>Product Name</th>
                             <th><i class="fas fa-shopping-basket me-2"></i>Quantity</th>
-                            <th><i class="fas fa-warehouse me-2"></i>Available Stock</th>
-                            <th><i class="fas fa-info-circle me-2"></i>Status</th>
                             <th><i class="fas fa-trash me-2"></i>Actions</th>
                         </tr>
                     </thead>
@@ -512,20 +489,6 @@
                         <tr id="product-row-{{ product.barcode }}">
                             <td class="product-name">{{ product.name }}</td>
                             <td class="quantity-info">{{ product.quantity }}</td>
-                            <td class="stock-info">{{ product.available }}</td>
-                            <td>
-                                {% if product.quantity > product.available %}
-                                    <span class="status-badge status-partial">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        Partial Available ({{ product.available }})
-                                    </span>
-                                {% else %}
-                                    <span class="status-badge status-in-stock">
-                                        <i class="fas fa-check-circle"></i>
-                                        In Stock
-                                    </span>
-                                {% endif %}
-                            </td>
                             <td>
                                 <button class="btn btn-danger btn-sm" onclick="removeFromCart('{{ product.barcode }}', '{{ product.name }}')">
                                     <i class="fas fa-trash me-1"></i>Remove
@@ -572,22 +535,7 @@
 
     <script>
         document.getElementById('checkoutBtn')?.addEventListener('click', function() {
-            // Check if there are any low stock items
-            const lowStockItems = [];
-            {% for product in products %}
-                {% if product.quantity > product.available %}
-                    lowStockItems.push("{{ product.name }} (requested: {{ product.quantity }}, available: {{ product.available }})");
-                {% endif %}
-            {% endfor %}
-            
-            let message = "Are you sure you want to place this order?";
-            if (lowStockItems.length > 0) {
-                message = "Some items have limited availability and may be delayed:\n\n" + 
-                    lowStockItems.join("\n") + 
-                    "\n\nDo you want to proceed with the order?";
-            }
-            
-            if (confirm(message)) {
+            if (confirm("Are you sure you want to place this order?")) {
                 // Show loading overlay
                 document.getElementById('loadingOverlay').classList.add('show');
                 
@@ -620,60 +568,6 @@
                 });
             }
         });
-
-        // Modern notification system
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-                ${message}
-            `;
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'success' ? 'linear-gradient(45deg, #10b981, #059669)' : 'linear-gradient(45deg, #ef4444, #dc2626)'};
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-                z-index: 10001;
-                font-weight: 600;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                max-width: 400px;
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
-        }
-
-        // Add some interactive effects
-        document.querySelectorAll('.summary-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-    </script>
-</body>
 
         // Remove item from cart
         function removeFromCart(barcode, productName) {
@@ -741,30 +635,64 @@
             const remainingRows = document.querySelectorAll('tbody tr');
             const totalItems = remainingRows.length;
             
-            // Update total items count
-            const totalItemsCard = document.querySelector('.summary-card .number');
-            if (totalItemsCard) {
-                totalItemsCard.textContent = totalItems;
-            }
+            // Update summary cards
+            const summaryNumbers = document.querySelectorAll('.summary-card .number');
+            summaryNumbers.forEach(numberElement => {
+                numberElement.textContent = totalItems;
+            });
+        }
+
+        // Modern notification system
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                ${message}
+            `;
             
-            // Recalculate in-stock and partial stock counts
-            let inStockCount = 0;
-            let partialStockCount = 0;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'linear-gradient(45deg, #10b981, #059669)' : 'linear-gradient(45deg, #ef4444, #dc2626)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                z-index: 10001;
+                font-weight: 600;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 400px;
+            `;
             
-            remainingRows.forEach(row => {
-                const statusBadge = row.querySelector('.status-badge');
-                if (statusBadge && statusBadge.classList.contains('status-in-stock')) {
-                    inStockCount++;
-                } else if (statusBadge && statusBadge.classList.contains('status-partial')) {
-                    partialStockCount++;
-                }
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Add some interactive effects
+        document.querySelectorAll('.summary-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
             });
             
-            // Update summary cards
-            const summaryCards = document.querySelectorAll('.summary-card .number');
-            if (summaryCards.length >= 3) {
-                summaryCards[1].textContent = inStockCount;
-                summaryCards[2].textContent = partialStockCount;
-            }
-        }
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
 </html>
