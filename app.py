@@ -402,40 +402,32 @@ def shipment():
         try:
             order_data = json.loads(order['order_data'])
             item_list = []
-            total_value = 0
             
             for barcode, details in order_data.items():
-                # Get product info with better debugging
-                product = conn.execute('SELECT name, price FROM products WHERE barcode = ?', (barcode,)).fetchone()
+                # Get product info (removed price column reference)
+                product = conn.execute('SELECT name FROM products WHERE barcode = ?', (barcode,)).fetchone()
                 
                 if product:
                     product_name = product['name']
-                    # Calculate value if price exists
-                    price = product.get('price', 0) if product.get('price') else 0
                 else:
                     # Check if barcode exists in any format
-                    all_products = conn.execute('SELECT barcode, name, price FROM products WHERE barcode LIKE ?', (f'%{barcode}%',)).fetchall()
+                    all_products = conn.execute('SELECT barcode, name FROM products WHERE barcode LIKE ?', (f'%{barcode}%',)).fetchall()
                     if all_products:
                         # Use the first match
                         product_name = all_products[0]['name']
-                        price = all_products[0].get('price', 0) if all_products[0].get('price') else 0
                     else:
                         # Still no match, show clearer message for deleted products
                         product_name = f"[Deleted Product - {barcode}]"
-                        price = 0
                 
                 # Ensure details has quantity key
                 quantity = details.get('quantity', 1) if isinstance(details, dict) else details
                 item_list.append(f"{product_name} (Qty: {quantity})")
-                total_value += price * quantity
             
             order_dict['product_names'] = item_list if item_list else ['No items found']
-            order_dict['total_value'] = total_value
             
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             # Better error handling
             order_dict['product_names'] = [f'[Data parsing error: {str(e)}]']
-            order_dict['total_value'] = 0
         
         processed_orders.append(order_dict)
 
