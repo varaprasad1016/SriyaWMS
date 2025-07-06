@@ -839,7 +839,9 @@ def add_stock_to_product():
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
     
-    return render_template('report.html', products=products, message=message, message_type=message_type)
+    # Redirect back to inventory report instead of report.html
+    flash(message, message_type)
+    return redirect(url_for('inventory_report'))
 
 @app.route('/add-to-cart', methods=['POST'])
 def add_to_cart():
@@ -1180,6 +1182,61 @@ def cleanup_orders():
     
     conn.close()
     return jsonify({'orphaned_orders': orphaned_orders})
+
+@app.route('/inventory-report')
+def inventory_report():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    # Get filter parameters
+    location_filter = request.args.get('location', 'all')
+    stock_filter = request.args.get('stock', 'all')
+    
+    conn = get_db_connection()
+    
+    # Build the query based on filters
+    query = 'SELECT * FROM products'
+    params = []
+    conditions = []
+    
+    if location_filter != 'all':
+        conditions.append('location = ?')
+        params.append(location_filter)
+    
+    if stock_filter == 'low':
+        conditions.append('quantity <= min_stock_level')
+    elif stock_filter == 'out':
+        conditions.append('quantity = 0')
+    elif stock_filter == 'in':
+        conditions.append('quantity > 0')
+    
+    if conditions:
+        query += ' WHERE ' + ' AND '.join(conditions)
+    
+    query += ' ORDER BY name'
+    
+    products = conn.execute(query, params).fetchall()
+    
+    # Get statistics
+    total_products = conn.execute('SELECT COUNT(*) as count FROM products').fetchone()['count']
+    total_items = conn.execute('SELECT SUM(quantity) as total FROM products').fetchone()['total'] or 0
+    low_stock_count = conn.execute('SELECT COUNT(*) as count FROM products WHERE quantity <= min_stock_level').fetchone()['count']
+    out_of_stock_count = conn.execute('SELECT COUNT(*) as count FROM products WHERE quantity = 0').fetchone()['count']
+    
+    # Get unique locations
+    locations = [row['location'] for row in conn.execute('SELECT DISTINCT location FROM products WHERE location IS NOT NULL').fetchall()]
+    
+    conn.close()
+    
+    return render_template('inventory_report.html', 
+                         products=products,
+                         total_products=total_products,
+                         total_items=total_items,
+                         low_stock_count=low_stock_count,
+                         out_of_stock_count=out_of_stock_count,
+                         locations=locations,
+                         location_filter=location_filter,
+                         stock_filter=stock_filter)
 
 @app.route('/forecast')
 def sales_forecast():
