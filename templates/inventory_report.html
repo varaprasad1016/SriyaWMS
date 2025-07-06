@@ -112,14 +112,17 @@
                                         <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addStockModal{{ product.id }}">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                        <a href="{{ url_for('print_barcode', barcode=product.barcode) }}" class="btn btn-sm btn-info">
-                                            <i class="fas fa-barcode"></i>
-                                        </a>
-                                    </div>
-                                </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <!-- Remove the edit button since edit_product route doesn't exist -->
+                                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addStockModal{{ product.id }}">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                                <a href="{{ url_for('print_barcode', barcode=product.barcode) }}" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-barcode"></i>
+                                                </a>
+                                            </div>
+                                        </td>
                             </tr>
                             {% endfor %}
                         </tbody>
