@@ -809,19 +809,73 @@ def add_stock_to_product():
 @app.route('/add-to-cart', methods=['POST'])
 def add_to_cart():
     if 'user_id' not in session or session.get('role') != 'customer':
-        return jsonify({'success': False})
+        return jsonify({'success': False, 'message': 'Please log in as a customer'})
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'Invalid request data'})
+        
+        barcode = data.get('barcode')
+        quantity = data.get('quantity')
+        
+        if not barcode or not quantity:
+            return jsonify({'success': False, 'message': 'Missing product or quantity information'})
+        
+        quantity = int(quantity)
+        if quantity <= 0:
+            return jsonify({'success': False, 'message': 'Quantity must be greater than 0'})
+        
+        # Check if product exists
+        conn = get_db_connection()
+        product = conn.execute('SELECT * FROM products WHERE barcode = ?', (barcode,)).fetchone()
+        conn.close()
+        
+        if not product:
+            return jsonify({'success': False, 'message': 'Product not found'})
+        
+        cart = session.get('cart', {})
+        if barcode in cart:
+            cart[barcode]['quantity'] += quantity
+        else:
+            cart[barcode] = {'quantity': quantity}
+        
+        session['cart'] = cart
+        session.modified = True
+        total_items = sum(item['quantity'] for item in cart.values())
+        
+        return jsonify({
+            'success': True, 
+            'cart_count': total_items,
+            'message': f'Added {quantity} item(s) to cart'
+        })
+        
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid quantity value'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'An error occurred while adding to cart'})
+
+@app.route('/remove-from-cart', methods=['POST'])
+def remove_from_cart():
+    if 'user_id' not in session or session.get('role') != 'customer':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+    
     data = request.get_json()
-    barcode = data['barcode']
-    quantity = int(data['quantity'])
+    barcode = data.get('barcode')
+    
+    if not barcode:
+        return jsonify({'success': False, 'message': 'Invalid request'})
+    
     cart = session.get('cart', {})
+    
     if barcode in cart:
-        cart[barcode]['quantity'] += quantity
+        del cart[barcode]
+        session['cart'] = cart
+        session.modified = True
+        total_items = sum(item['quantity'] for item in cart.values())
+        return jsonify({'success': True, 'cart_count': total_items, 'message': 'Item removed from cart'})
     else:
-        cart[barcode] = {'quantity': quantity}
-    session['cart'] = cart
-    session.modified = True
-    total_items = sum(item['quantity'] for item in cart.values())
-    return jsonify({'success': True, 'cart_count': total_items})
+        return jsonify({'success': False, 'message': 'Item not found in cart'})
 
 @app.route('/cart')
 def view_cart():

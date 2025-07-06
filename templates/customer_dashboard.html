@@ -733,7 +733,12 @@
                 },
                 body: JSON.stringify({ barcode, quantity: quantityNum })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
                 if (data.success) {
                     showNotification('Product added to cart!', 'success');
@@ -747,11 +752,16 @@
                         }
                     }
                 } else {
-                    showNotification('Error adding to cart. Please try again.', 'error');
+                    showNotification(data.message || 'Error adding to cart. Please try again.', 'error');
                 }
             })
-            .catch(() => {
-                showNotification('Network error. Please check your connection.', 'error');
+            .catch(error => {
+                console.error('Error:', error);
+                if (error.message.includes('Server error')) {
+                    showNotification('Server error. Please try again later.', 'error');
+                } else {
+                    showNotification('Network error. Please check your connection.', 'error');
+                }
             });
         }
 

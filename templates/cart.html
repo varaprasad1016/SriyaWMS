@@ -504,11 +504,12 @@
                             <th><i class="fas fa-shopping-basket me-2"></i>Quantity</th>
                             <th><i class="fas fa-warehouse me-2"></i>Available Stock</th>
                             <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                            <th><i class="fas fa-trash me-2"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for product in products %}
-                        <tr>
+                        <tr id="product-row-{{ product.barcode }}">
                             <td class="product-name">{{ product.name }}</td>
                             <td class="quantity-info">{{ product.quantity }}</td>
                             <td class="stock-info">{{ product.available }}</td>
@@ -524,6 +525,11 @@
                                         In Stock
                                     </span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="removeFromCart('{{ product.barcode }}', '{{ product.name }}')">
+                                    <i class="fas fa-trash me-1"></i>Remove
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
