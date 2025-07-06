@@ -674,4 +674,97 @@
         });
     </script>
 </body>
+
+        // Remove item from cart
+        function removeFromCart(barcode, productName) {
+            if (confirm(`Are you sure you want to remove "${productName}" from your cart?`)) {
+                fetch('/remove-from-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ barcode: barcode })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table
+                        const row = document.getElementById(`product-row-${barcode}`);
+                        if (row) {
+                            row.remove();
+                        }
+                        
+                        // Update cart count in navigation
+                        const cartBadge = document.querySelector('.nav-link .badge');
+                        if (cartBadge) {
+                            if (data.cart_count > 0) {
+                                cartBadge.textContent = data.cart_count;
+                            } else {
+                                cartBadge.remove();
+                            }
+                        }
+                        
+                        // Show success message
+                        showNotification(data.message || 'Item removed from cart', 'success');
+                        
+                        // If cart is empty, reload the page to show empty cart state
+                        if (data.cart_count === 0) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            // Update summary cards
+                            updateCartSummary();
+                        }
+                    } else {
+                        showNotification(data.message || 'Error removing item from cart', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (error.message.includes('Server error')) {
+                        showNotification('Server error. Please try again later.', 'error');
+                    } else {
+                        showNotification('Network error. Please check your connection.', 'error');
+                    }
+                });
+            }
+        }
+        
+        // Update cart summary after item removal
+        function updateCartSummary() {
+            const remainingRows = document.querySelectorAll('tbody tr');
+            const totalItems = remainingRows.length;
+            
+            // Update total items count
+            const totalItemsCard = document.querySelector('.summary-card .number');
+            if (totalItemsCard) {
+                totalItemsCard.textContent = totalItems;
+            }
+            
+            // Recalculate in-stock and partial stock counts
+            let inStockCount = 0;
+            let partialStockCount = 0;
+            
+            remainingRows.forEach(row => {
+                const statusBadge = row.querySelector('.status-badge');
+                if (statusBadge && statusBadge.classList.contains('status-in-stock')) {
+                    inStockCount++;
+                } else if (statusBadge && statusBadge.classList.contains('status-partial')) {
+                    partialStockCount++;
+                }
+            });
+            
+            // Update summary cards
+            const summaryCards = document.querySelectorAll('.summary-card .number');
+            if (summaryCards.length >= 3) {
+                summaryCards[1].textContent = inStockCount;
+                summaryCards[2].textContent = partialStockCount;
+            }
+        }
 </html>
