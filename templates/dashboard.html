@@ -690,10 +690,6 @@
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="{{ url_for('scan') }}" class="sidebar-link">
-                <i class="fas fa-barcode"></i>
-                <span>Scan Product</span>
-            </a>
             <a href="{{ url_for('add_product') }}" class="sidebar-link">
                 <i class="fas fa-plus-circle"></i>
                 <span>Add Product</span>
@@ -707,10 +703,9 @@
                 <span>Inventory Report</span>
             </a>
             <a href="{{ url_for('sales_forecast') }}" class="sidebar-link">
-    <i class="fas fa-chart-line"></i>
-    <span>Sales Analytics</span>
-</a>
-
+                <i class="fas fa-chart-line"></i>
+                <span>Sales Analytics</span>
+            </a>
             <a href="{{ url_for('shipment') }}" class="sidebar-link">
                 <i class="fas fa-truck"></i>
                 <span>Shipments</span>
@@ -719,14 +714,6 @@
         
         <div class="nav-section">
             <p class="nav-section-title">Settings</p>
-            <a href="#" class="sidebar-link">
-                <i class="fas fa-cog"></i>
-                <span>Preferences</span>
-            </a>
-            <a href="#" class="sidebar-link">
-                <i class="fas fa-users"></i>
-                <span>Users</span>
-            </a>
             <a href="{{ url_for('logout') }}" class="sidebar-link">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
