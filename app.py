@@ -811,18 +811,17 @@ def add_stock_to_product():
                                       (product_id,)).fetchone()
                 
                 if product:
-                    # Update product quantity
+                    # Update product quantity - this is the main operation
                     conn.execute('UPDATE products SET quantity = quantity + ? WHERE id = ?', 
                                 (quantity, product_id))
                     
-                    # Also log this in the stock table for tracking
-                    conn.execute('INSERT INTO stock (barcode, quantity) VALUES (?, ?)',
-                                (product['barcode'], quantity))
+                    # Remove the problematic stock table insertion
+                    # since you only use the products table
                     
-                    # Log activity to activity_log table if it exists
                     product_name = product['name']
                     new_quantity = product['quantity'] + quantity
                     
+                    # Optional: Log activity if activity_log table exists
                     try:
                         conn.execute('''
                             INSERT INTO activity_log (activity_type, description, related_id) 
@@ -844,12 +843,7 @@ def add_stock_to_product():
             message = "Quantity must be a number"
             message_type = "error"
     
-    # Get all products again to refresh the list
-    conn = get_db_connection()
-    products = conn.execute('SELECT * FROM products').fetchall()
-    conn.close()
-    
-    # Redirect back to inventory report instead of report.html
+    # Redirect back to inventory report
     flash(message, message_type)
     return redirect(url_for('inventory_report'))
 
