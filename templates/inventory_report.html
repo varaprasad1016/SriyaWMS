@@ -49,11 +49,17 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="card-title mb-0">Filter Inventory</h5>
                 <div>
-                    <!-- Remove the export_inventory link since this route doesn't exist -->
-                    <a href="{{ url_for('bulk_update_stock') }}" class="btn btn-primary">
-                        <i class="fas fa-edit me-2"></i>Bulk Update
+                    <a href="{{ url_for('add_stock') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Stock
                     </a>
                 </div>
+            </div>
+            
+            <div>
+                <!-- Remove the export_inventory link since this route doesn't exist -->
+                <a href="{{ url_for('bulk_update_stock') }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Bulk Update
+                </a>
             </div>
             
             <form method="GET" action="{{ url_for('inventory_report') }}" class="row g-3">
