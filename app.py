@@ -1013,7 +1013,7 @@ def report():
     conn = get_db_connection()
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
-    return render_template('report.html', products=products)
+    return render_template('inventory_report.html', products=products)
 
 @app.route('/download-csv')
 def download_csv():
