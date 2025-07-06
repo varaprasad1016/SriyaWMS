@@ -1208,7 +1208,8 @@ def inventory_report():
         params.append(location_filter)
     
     if stock_filter == 'low':
-        conditions.append('quantity <= min_stock_level')
+        # Since there's no min_stock_level, define low stock as quantity <= 10
+        conditions.append('quantity <= 10')
     elif stock_filter == 'out':
         conditions.append('quantity = 0')
     elif stock_filter == 'in':
@@ -1221,10 +1222,11 @@ def inventory_report():
     
     products = conn.execute(query, params).fetchall()
     
-    # Get statistics
+    # Get statistics - removed min_stock_level references
     total_products = conn.execute('SELECT COUNT(*) as count FROM products').fetchone()['count']
     total_items = conn.execute('SELECT SUM(quantity) as total FROM products').fetchone()['total'] or 0
-    low_stock_count = conn.execute('SELECT COUNT(*) as count FROM products WHERE quantity <= min_stock_level').fetchone()['count']
+    # Define low stock as quantity <= 10 since no min_stock_level column exists
+    low_stock_count = conn.execute('SELECT COUNT(*) as count FROM products WHERE quantity <= 10').fetchone()['count']
     out_of_stock_count = conn.execute('SELECT COUNT(*) as count FROM products WHERE quantity = 0').fetchone()['count']
     
     # Get unique locations
