@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Stock{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Add Stock to Products</h1>
+    
+    {% if message %}
+        <div class="alert alert-{{ 'success' if message_type == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_stock') }}">
+                <div class="mb-3">
+                    <label for="product_id" class="form-label">Select Product</label>
+                    <select class="form-select" id="product_id" name="product_id" required>
+                        <option value="">Choose a product...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }} ({{ product.barcode }}) - Current Stock: {{ product.quantity }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity to Add</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" required placeholder="Enter quantity to add">
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                    <button type="submit" class="btn btn-primary">Add Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if products %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Current Stock Levels</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Barcode</th>
+                            <th>Current Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.barcode }}</td>
+                            <td class="{% if product.quantity <= 10 %}text-danger fw-bold{% endif %}">
+                                {{ product.quantity }}
+                                {% if product.quantity <= 10 %}
+                                <span class="badge bg-danger ms-2">Low Stock</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
