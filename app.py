@@ -86,9 +86,19 @@ def init_db():
             name TEXT NOT NULL,
             barcode TEXT UNIQUE NOT NULL,
             quantity INTEGER DEFAULT 0,
-            location TEXT
+            location TEXT,
+            min_stock_level INTEGER DEFAULT 5
         )
     ''')
+    
+    # Add the missing column if it doesn't exist
+    try:
+        cursor.execute('ALTER TABLE products ADD COLUMN min_stock_level INTEGER DEFAULT 5')
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS stock (
             tracker_id INTEGER PRIMARY KEY AUTOINCREMENT,
