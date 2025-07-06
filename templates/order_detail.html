@@ -42,47 +42,45 @@
             
             <!-- Order Items -->
             <div class="table-responsive">
-    <table class="table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>Item #</th>
-                <th>Description</th>
-                <th>Barcode</th>
-                <th class="text-end">Quantity</th>
-                <th class="text-end">Unit Price</th>
-                <th class="text-end">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in order_items %}
-            <tr>
-                <td>{{ item.product_id }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.barcode }}</td>
-                <td class="text-end">{{ item.quantity }}</td>
-                <td class="text-end">${{ "%.2f"|format(item.price) }}</td>
-                <td class="text-end">${{ "%.2f"|format(item.total) }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center">No items found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-</div>
-
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item #</th>
+                            <th>Description</th>
+                            <th>Barcode</th>
+                            <th class="text-end">Quantity</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.product_id }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.barcode }}</td>
+                            <td class="text-end">{{ item.quantity }}</td>
+                            <td class="text-end">${{ "%.2f"|format(item.price) }}</td>
+                            <td class="text-end">${{ "%.2f"|format(item.total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No items found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
                     <tfoot>
                         <tr>
                             <th colspan="5" class="text-end">Subtotal:</th>
-                            <td class="text-end">${{ "%.2f"|format(total) }}</td>
+                            <th class="text-end">${{ "%.2f"|format(total) }}</th>
                         </tr>
                         <tr>
                             <th colspan="5" class="text-end">Tax (0%):</th>
-                            <td class="text-end">$0.00</td>
+                            <th class="text-end">$0.00</th>
                         </tr>
                         <tr>
                             <th colspan="5" class="text-end">Total:</th>
-                            <td class="text-end"><strong>${{ "%.2f"|format(total) }}</strong></td>
+                            <th class="text-end"><strong>${{ "%.2f"|format(total) }}</strong></th>
                         </tr>
                     </tfoot>
                 </table>

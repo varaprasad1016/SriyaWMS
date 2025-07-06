@@ -335,21 +335,56 @@ def view_order_detail(order_id):
             product = conn.execute('SELECT * FROM products WHERE barcode = ?', (barcode,)).fetchone()
             
             if product:
-                # For simplicity, let's assume a placeholder price of $10 per item
-                price = 10.00
-                item_total = price * details['quantity']
+                # Calculate price based on product name or use a pricing logic
+                # For now, using a simple pricing scheme based on product characteristics
+                base_price = 10.00  # Base price
+                
+                # Simple pricing logic - you can customize this
+                product_name = product['name'].lower()
+                if 'premium' in product_name or 'deluxe' in product_name:
+                    price = base_price * 1.5
+                elif 'basic' in product_name or 'standard' in product_name:
+                    price = base_price * 0.8
+                else:
+                    price = base_price
+                
+                quantity = details.get('quantity', 1) if isinstance(details, dict) else details
+                item_total = price * quantity
                 order_total += item_total
                 
                 order_items.append({
                     'product_id': product['id'],
                     'name': product['name'],
                     'barcode': barcode,
-                    'quantity': details['quantity'],
+                    'quantity': quantity,
                     'price': price,
                     'total': item_total
                 })
-    except:
-        pass
+            else:
+                # Handle missing products
+                price = 10.00
+                quantity = details.get('quantity', 1) if isinstance(details, dict) else details
+                item_total = price * quantity
+                order_total += item_total
+                
+                order_items.append({
+                    'product_id': 'N/A',
+                    'name': f'[Deleted Product - {barcode}]',
+                    'barcode': barcode,
+                    'quantity': quantity,
+                    'price': price,
+                    'total': item_total
+                })
+    except Exception as e:
+        # Handle JSON parsing errors
+        order_items.append({
+            'product_id': 'ERROR',
+            'name': f'[Data parsing error: {str(e)}]',
+            'barcode': 'N/A',
+            'quantity': 0,
+            'price': 0,
+            'total': 0
+        })
     
     conn.close()
     
