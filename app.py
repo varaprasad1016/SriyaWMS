@@ -340,7 +340,7 @@ def shipment():
         return redirect(url_for('login'))
 
     conn = get_db_connection()
-    orders = conn.execute('SELECT * FROM sales_orders').fetchall()
+    orders = conn.execute('SELECT * FROM sales_orders ORDER BY created_at DESC').fetchall()
 
     processed_orders = []
     for order in orders:
