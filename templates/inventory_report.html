@@ -97,9 +97,7 @@
                                 <th>Name</th>
                                 <th>Barcode</th>
                                 <th>Quantity</th>
-                                <th>Min Stock Level</th>
                                 <th>Location</th>
-                                <th>Last Updated</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -108,12 +106,10 @@
                             <tr>
                                 <td>{{ product.name }}</td>
                                 <td>{{ product.barcode }}</td>
-                                <td class="{% if product.quantity <= product.min_stock_level %}text-danger fw-bold{% endif %}">
+                                <td class="{% if product.quantity <= 10 %}text-danger fw-bold{% endif %}">
                                     {{ product.quantity }}
                                 </td>
-                                <td>{{ product.min_stock_level }}</td>
                                 <td>{{ product.location }}</td>
-                                <td>{{ product.last_updated|format_datetime('%Y-%m-%d %H:%M') }}</td>
                                 <td>
                                     <div class="btn-group">
                                         <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-sm btn-primary">
@@ -125,9 +121,6 @@
                                         <a href="{{ url_for('print_barcode', barcode=product.barcode) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-barcode"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#historyModal{{ product.id }}">
-                                            <i class="fas fa-history"></i>
-                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -136,53 +129,7 @@
                     </table>
                 </div>
                 
-                <!-- Stock History Modals -->
-                {% for product in products %}
-                <div class="modal fade" id="historyModal{{ product.id }}" tabindex="-1" aria-labelledby="historyModalLabel{{ product.id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="historyModalLabel{{ product.id }}">Stock History: {{ product.name }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                {% if product.movements %}
-                                    <div class="table-responsive">
-                                        <table class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Quantity</th>
-                                                    <th>Transaction Type</th>
-                                                    <th>User</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for movement in product.movements %}
-                                                <tr>
-                                                    <td>{{ movement.created_at|format_datetime('%Y-%m-%d %H:%M') }}</td>
-                                                    <td class="{% if movement.quantity > 0 %}text-success{% elif movement.quantity < 0 %}text-danger{% endif %}">
-                                                        {% if movement.quantity > 0 %}+{% endif %}{{ movement.quantity }}
-                                                    </td>
-                                                    <td>{{ movement.transaction_type }}</td>
-                                                    <td>{{ movement.username|default('System') }}</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {% else %}
-                                    <p class="text-muted">No recent stock movements</p>
-                                {% endif %}
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <a href="{{ url_for('stock_movement_report', barcode=product.barcode) }}" class="btn btn-primary">View Full History</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+                <!-- Stock History Modals section should be completely removed -->
                 
                 <!-- Add Stock Modals -->
                 {% for product in products %}
